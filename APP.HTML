@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affan's Eco-Challenge Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #0d1a26;
+            --primary-glow: #00f5d4;
+            --secondary-glow: #00bbf9;
+            --accent-glow: #9b5de5;
+            --text-color: #ade8f4;
+            --card-bg: rgba(0, 26, 36, 0.75);
+            --border-color: rgba(0, 245, 212, 0.2);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .header-gradient {
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 0 25px rgba(0, 245, 212, 0.1);
+            transition: all 0.3s ease;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            padding: 8px 4px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-glow);
+            text-shadow: 0 0 10px var(--primary-glow);
+            border-bottom-color: var(--primary-glow);
+        }
+        .page { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glow-text { text-shadow: 0 0 8px var(--primary-glow); }
+        .world-map-container {
+            position: relative;
+            background: url('https://raw.githubusercontent.com/d3/d3.github.com/master/world-110m.v1.json') no-repeat center center;
+            background-size: contain;
+        }
+        .map-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-glow);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--primary-glow);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.5); } }
+        .mission-toggle { /* Custom toggle switch */
+            position: relative; display: inline-block; width: 60px; height: 34px;
+        }
+        .mission-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2b4c5e; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-glow); }
+        input:checked + .slider:before { transform: translateX(26px); }
+    </style>
+</head>
+<body class="text-gray-200">
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header & Navigation -->
+        <header class="card p-4 mb-8 sticky top-4 z-50">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="text-center md:text-left">
+                    <h1 class="font-orbitron text-3xl font-bold header-gradient">ECO-TERMINAL</h1>
+                    <p class="text-sm text-cyan-200">ECOLOGICAL IMPACT ANALYSIS // USER: AFFAN</p>
+                </div>
+                <nav id="main-nav" class="flex flex-wrap justify-center space-x-2 md:space-x-4 mt-4 md:mt-0 font-orbitron text-sm md:text-base">
+                    <a href="#dashboard" class="nav-link">Dashboard</a>
+                    <a href="#logs" class="nav-link">Log Archives</a>
+                    <a href="#impact" class="nav-link">Impact Analysis</a>
+                    <a href="#network" class="nav-link">Global Network</a>
+                    <a href="#mission" class="nav-link">Mission Control</a>
+                    <a href="#pedia" class="nav-link">Eco-Pedia</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main>
+            <!-- PAGE: Dashboard -->
+            <section id="page-dashboard" class="page">
+                 <!-- Content from previous version -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="font-orbitron text-cyan-300">TOTAL CO₂ SAVED</h3>
+                        <p id="total-saved" class="text-5xl font-bold glow-text text-teal-300">0.00 <span class="text-2xl">kg</span></p>
+                    </div>
+                    <div class="card p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="font-orbitron text-cyan-300">AVG. DAILY REDUCTION</h3>
+                        <p id="avg-reduction" class="text-5xl font-bold glow-text text-teal-300">0.00 <span class="text-2xl">kg</span></p>
+                    </div>
+                    <div class="card p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="font-orbitron text-cyan-300">PEAK ECO-SCORE</h3>
+                        <p id="peak-eco-score" class="text-5xl font-bold glow-text text-teal-300">0</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 card p-6">
+                        <h2 class="font-orbitron text-xl mb-4">DAILY SAVINGS ANALYSIS (kg CO₂)</h2>
+                        <canvas id="dailySavingsChart"></canvas>
+                    </div>
+                    <div class="lg:col-span-2 card p-6">
+                        <h2 class="font-orbitron text-xl mb-4">IMPACT SOURCE MATRIX</h2>
+                        <canvas id="categorySavingsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: Log Archives -->
+            <section id="page-logs" class="page">
+                 <!-- Content from previous version -->
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 card p-6">
+                        <h2 class="font-orbitron text-2xl mb-4 border-b-2 border-cyan-500/30 pb-2">DATA LOGS</h2>
+                        <div id="calendar-grid" class="grid grid-cols-5 gap-2"></div>
+                    </div>
+                    <div class="lg:col-span-2 card p-8">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="font-orbitron text-2xl mb-1">ACTIVITY ANALYSIS:</h2>
+                                <p id="selected-day-text" class="text-lg text-cyan-300 font-semibold">DAY 01</p>
+                            </div>
+                            <div class="text-right">
+                                <h2 class="font-orbitron text-2xl mb-1">ECO-SCORE</h2>
+                                <p id="daily-eco-score" class="text-4xl font-bold text-teal-300 glow-text">0</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 space-y-4">
+                            <div id="log-display" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: Impact Analysis -->
+            <section id="page-impact" class="page">
+                <!-- Content from previous version -->
+                <div class="card p-8 mb-8">
+                    <h2 class="font-orbitron text-2xl text-center mb-6 border-b-2 border-cyan-500/30 pb-2">ACHIEVEMENTS UNLOCKED</h2>
+                    <div id="achievements-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
+                </div>
+                <div class="card p-8 text-center border-2 border-cyan-400">
+                    <h2 class="font-orbitron text-3xl text-cyan-200 mb-4">365-DAY IMPACT PROJECTION</h2>
+                    <p class="text-lg text-gray-400 mb-6">Based on the 30-day average, continued habits would result in:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <p class="text-5xl font-bold glow-text text-teal-300" id="proj-co2">0 kg</p>
+                            <p class="text-cyan-400 mt-2 font-semibold">Projected CO₂ Saved Annually</p>
+                        </div>
+                        <div>
+                            <p class="text-5xl font-bold glow-text text-teal-300" id="proj-trees">0</p>
+                            <p class="text-cyan-400 mt-2 font-semibold">Annual Tree Sequestration Equivalent</p>
+                        </div>
+                        <div>
+                            <p class="text-5xl font-bold glow-text text-teal-300" id="proj-driving">0 km</p>
+                            <p class="text-cyan-400 mt-2 font-semibold">Annual KMs Not Driven Equivalent</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- PAGE: Global Impact Network -->
+            <section id="page-network" class="page">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 card p-6">
+                         <h2 class="font-orbitron text-2xl mb-4">GLOBAL IMPACT NETWORK</h2>
+                         <div class="relative aspect-video bg-cover bg-center" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg');">
+                             <div id="map-dots-container"></div>
+                         </div>
+                    </div>
+                    <div class="card p-6">
+                        <h2 class="font-orbitron text-2xl mb-4">NETWORK STATS</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-cyan-300">Total Network CO₂ Saved:</h3>
+                                <p id="network-total-saved" class="text-3xl font-bold glow-text">0 t</p>
+                            </div>
+                            <div>
+                                <h3 class="text-cyan-300">Active Eco-Warriors:</h3>
+                                <p id="network-users" class="text-3xl font-bold glow-text">0</p>
+                            </div>
+                            <h3 class="text-cyan-300 pt-4">Top Agents:</h3>
+                            <ul id="network-leaderboard" class="space-y-2 text-sm"></ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: Mission Control -->
+            <section id="page-mission" class="page">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-8">
+                        <h2 class="font-orbitron text-2xl mb-6">MISSION CONTROL: SET NEXT MONTH'S GOALS</h2>
+                        <div class="space-y-6">
+                            <div>
+                                <label for="goal-slider" class="block mb-2 font-semibold">Set CO₂ Reduction Target: <span id="goal-value" class="font-bold text-cyan-300">5%</span></label>
+                                <input type="range" id="goal-slider" min="1" max="25" value="5" class="w-full">
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-2">Commit to New Habits:</h3>
+                                <div id="habit-builder" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-8 flex flex-col items-center justify-center">
+                        <h2 class="font-orbitron text-2xl mb-4">NEW MISSION PLEDGE</h2>
+                        <div id="pledge-card" class="w-full text-center p-6 border-2 border-dashed border-cyan-400 rounded-lg">
+                            <p class="text-lg">I, Affan, pledge to reduce my carbon footprint by</p>
+                            <p id="pledge-goal" class="text-4xl font-orbitron my-4 text-teal-300 glow-text">5%</p>
+                            <p>next month by committing to:</p>
+                            <ul id="pledge-habits" class="mt-2 text-cyan-300"><li>-</li></ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: Eco-Pedia -->
+            <section id="page-pedia" class="page">
+                <!-- Content from previous version -->
+                <div class="card p-8">
+                    <h2 class="font-orbitron text-3xl text-center mb-6 border-b-2 border-cyan-500/30 pb-2">ECO-PEDIA KNOWLEDGE BASE</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="eco-pedia-grid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="card w-11/12 md:w-1/2 p-8 border-2 border-cyan-400 relative">
+            <button id="close-modal" class="absolute top-4 right-4 text-2xl hover:text-cyan-300">&times;</button>
+            <h2 id="modal-title" class="font-orbitron text-2xl text-cyan-200 mb-4"></h2>
+            <p id="modal-content" class="text-gray-300"></p>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- CONFIG & STATE ---
+    const TOTAL_DAYS = 30;
+    let selectedDay = 1;
+    let challengeData = [];
+    const mainNav = document.getElementById('main-nav');
+    const pages = document.querySelectorAll('.page');
+    const modal = document.getElementById('modal');
+    const closeModalBtn = document.getElementById('close-modal');
+
+    // ... (SAVINGS_MAP, MAX_DAILY_SAVING, ACHIEVEMENTS, ECO_PEDIA_CONTENT from previous version)
+    const SAVINGS_MAP = {
+        transport: { 'Gasoline Car': 0, 'Carpool': 1.5, 'Public Transport': 2.5, 'Electric Vehicle': 3.0, 'Bike/Walk': 3.5 },
+        diet: { 'Red Meat': 0, 'No Red Meat': 1.0, 'Vegetarian': 1.8, 'Vegan': 2.5 },
+        actions: { 'Unplugged Devices': 0.2, 'Avoided Single-Use Plastic': 0.3, 'Ate Local Food': 0.4 }
+    };
+    const MAX_DAILY_SAVING = SAVINGS_MAP.transport['Bike/Walk'] + SAVINGS_MAP.diet['Vegan'] + Object.values(SAVINGS_MAP.actions).reduce((a, b) => a + b, 0);
+    const ACHIEVEMENTS = [ { id: 'week_one', name: 'Eco-Initiate', desc: 'Complete 7 days', threshold: (data) => data.filter(d=>d.logged).length >= 7, icon: '🌱' }, { id: 'meatless_5', name: 'Plant-Powered', desc: '5 meatless days', threshold: (data) => data.filter(d=>d.logged && d.details.diet !== 'Red Meat').length >= 5, icon: '🥗' }, { id: 'transport_5', name: 'Grid Rider', desc: '5 days without a gas car', threshold: (data) => data.filter(d=>d.logged && d.details.transport !== 'Gasoline Car').length >= 5, icon: '🚆' }, { id: 'total_50', name: 'Carbon Crusher', desc: 'Save 50kg CO₂', threshold: (data) => data.reduce((acc, d) => acc + d.savings, 0) >= 50, icon: '💥' }, { id: 'peak_score_90', name: 'Eco-Virtuoso', desc: 'Achieve an Eco-Score of 90+', threshold: (data) => Math.max(...data.map(d => d.ecoScore)) >= 90, icon: '⭐' }, { id: 'challenge_complete', name: 'Planet Guardian', desc: 'Complete 30 days', threshold: (data) => data.filter(d=>d.logged).length >= 30, icon: '🌍' }];
+    const ECO_PEDIA_CONTENT = [ { title: 'The Power of EVs', content: 'Electric vehicles produce zero tailpipe emissions. Charging an EV with renewable energy means your transport can be nearly carbon-neutral. An average EV saves about 1.5 tons of CO₂ per year compared to a gasoline car.' }, { title: 'Dietary Impact', content: 'Livestock farming is a major source of methane, a potent greenhouse gas. Reducing red meat consumption is one of the most effective individual actions. A vegan diet can reduce your food-related carbon footprint by up to 73%.' }, { title: 'Phantom Power', content: 'Many electronics draw power even when turned off. This "phantom load" can account for up to 10% of household electricity use. Unplugging devices or using a smart power strip can save both energy and money.' }, { title: 'Local Sourcing', content: 'Food miles, the distance food travels from farm to plate, contribute significantly to emissions. Buying local, seasonal produce supports your community and reduces the carbon footprint associated with long-distance transportation and refrigeration.'}, { title: 'Plastic Problem', content: 'Plastic production is energy-intensive and relies on fossil fuels. Most plastics are not recycled and end up in landfills or oceans. Avoiding single-use plastics reduces demand and waste.'}, { title: 'Public Transit', content: 'Buses and trains are far more energy-efficient per passenger than individual cars. A full bus can take 50 cars off the road, reducing congestion and emissions. It\'s a powerful collective action for cleaner air.' } ];
+    
+    // --- INITIALIZATION & NAVIGATION ---
+    function init() {
+        challengeData = generateRealisticData();
+        
+        mainNav.addEventListener('click', handleNav);
+        closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        window.addEventListener('hashchange', () => showPage(window.location.hash.substring(1) || 'dashboard'));
+        
+        const initialPage = window.location.hash.substring(1) || 'dashboard';
+        showPage(initialPage);
+        
+        renderAllPages();
+        selectDay(1);
+    }
+
+    function handleNav(e) {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            const pageId = e.target.hash.substring(1);
+            window.location.hash = pageId;
+        }
+    }
+
+    function showPage(pageId) {
+        pages.forEach(page => page.classList.toggle('active', page.id === `page-${pageId}`));
+        mainNav.querySelectorAll('a').forEach(link => link.classList.toggle('active', link.hash === `#${pageId}`));
+        
+        if (pageId === 'dashboard' && !dailyChart) {
+             updateCharts();
+        }
+    }
+
+    function renderAllPages() {
+        // Page-specific render functions
+        renderCalendar();
+        updateDashboard();
+        updateAchievements();
+        renderGlobalNetwork();
+        renderMissionControl();
+        renderEcoPedia();
+    }
+
+    // --- PAGE-SPECIFIC RENDER FUNCTIONS ---
+    function renderGlobalNetwork() {
+        const users = 250;
+        const totalSavings = (challengeData.reduce((a,b)=>a+b.savings,0) / 1000) * users * 1.2; // in tonnes
+        document.getElementById('network-total-saved').textContent = `${totalSavings.toFixed(1)} t`;
+        document.getElementById('network-users').textContent = users.toLocaleString();
+
+        const leaderboard = document.getElementById('network-leaderboard');
+        leaderboard.innerHTML = [
+            { name: 'Agent Zero', savings: '215.5 kg' },
+            { name: 'Eco_Ninja', savings: '198.2 kg' },
+            { name: 'Affan', savings: `${challengeData.reduce((a,b)=>a+b.savings,0).toFixed(1)} kg` },
+            { name: 'Leaf.Guardian', savings: '175.0 kg' },
+            { name: 'Capt. Planet', savings: '160.9 kg' },
+        ].sort((a,b) => parseFloat(b.savings) - parseFloat(a.savings)).map(u => `<li class="flex justify-between ${u.name === 'Affan' ? 'text-teal-300 font-bold' : ''}"><span>${u.name}</span><span>${u.savings}</span></li>`).join('');
+        
+        const mapContainer = document.getElementById('map-dots-container');
+        mapContainer.innerHTML = '';
+        const locations = [[51, 0], [34, -118], [28, 77], [-33, 151], [35, 139], [19, -99], [-22, -43]]; // London, LA, Delhi, Sydney, Tokyo, Mexico City, Rio
+        locations.forEach(loc => {
+            const dot = document.createElement('div');
+            dot.className = 'map-dot';
+            dot.style.top = `${50 - loc[0]/1.8}%`; // Simple projection
+            dot.style.left = `${50 + loc[1]/3.6}%`;
+            mapContainer.appendChild(dot);
+        });
+    }
+
+    function renderMissionControl() {
+        const goalSlider = document.getElementById('goal-slider');
+        const goalValue = document.getElementById('goal-value');
+        const pledgeGoal = document.getElementById('pledge-goal');
+        const pledgeHabits = document.getElementById('pledge-habits');
+        const habitBuilder = document.getElementById('habit-builder');
+
+        goalSlider.addEventListener('input', () => {
+            const val = `${goalSlider.value}%`;
+            goalValue.textContent = val;
+            pledgeGoal.textContent = val;
+        });
+
+        const habits = [ "Go meatless 8 days/month", "Use public transport 2x/week", "Eliminate plastic bottles", "Start composting" ];
+        habitBuilder.innerHTML = habits.map((habit, i) => `
+            <div class="flex items-center justify-between">
+                <label for="habit-${i}">${habit}</label>
+                <label class="mission-toggle">
+                    <input type="checkbox" id="habit-${i}" data-habit="${habit}">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `).join('');
+
+        habitBuilder.addEventListener('change', () => {
+            const committedHabits = Array.from(habitBuilder.querySelectorAll('input:checked')).map(el => `<li>${el.dataset.habit}</li>`).join('');
+            pledgeHabits.innerHTML = committedHabits || '<li>-</li>';
+        });
+    }
+    
+    // ... (All other functions from previous version like generateRealisticData, renderCalendar, updateDashboard, etc.)
+     function generateRealisticData() { const data = []; const transportChoices = Object.keys(SAVINGS_MAP.transport); const dietChoices = Object.keys(SAVINGS_MAP.diet); for (let i = 0; i < TOTAL_DAYS; i++) { const progressFactor = (i / TOTAL_DAYS) * 0.8 + 0.2; const transport = transportChoices[Math.floor(Math.random() * transportChoices.length * progressFactor)]; const diet = dietChoices[Math.floor(Math.random() * dietChoices.length * progressFactor)]; const actions = { 'Unplugged Devices': Math.random() < 0.3 + progressFactor * 0.6, 'Avoided Single-Use Plastic': Math.random() < 0.2 + progressFactor * 0.5, 'Ate Local Food': Math.random() < 0.1 + progressFactor * 0.4 }; const transportSave = SAVINGS_MAP.transport[transport] || 0; const dietSave = SAVINGS_MAP.diet[diet] || 0; const actionsSave = Object.keys(actions).reduce((acc, key) => acc + (actions[key] ? SAVINGS_MAP.actions[key] : 0), 0); const totalSaving = transportSave + dietSave + actionsSave; const ecoScore = Math.round((totalSaving / MAX_DAILY_SAVING) * 100); data.push({ logged: true, savings: totalSaving, ecoScore: ecoScore, details: { transport, diet, actions, savings: { transport: transportSave, diet: dietSave, actions: actionsSave } } }); } return data; }
+    function renderCalendar() { const calendarGrid = document.getElementById('calendar-grid'); calendarGrid.innerHTML = ''; challengeData.forEach((_, index) => { const i = index + 1; const dayCard = document.createElement('div'); dayCard.className = `day-card p-3 text-center rounded-lg logged`; dayCard.textContent = `Day ${i < 10 ? '0' + i : i}`; dayCard.dataset.day = i; dayCard.addEventListener('click', () => selectDay(i)); calendarGrid.appendChild(dayCard); }); }
+    function selectDay(dayNumber) { selectedDay = dayNumber; document.querySelectorAll('.day-card').forEach(card => { card.classList.toggle('active', card.dataset.day == selectedDay); }); const dayNumStr = dayNumber < 10 ? '0' + dayNumber : dayNumber; document.getElementById('selected-day-text').textContent = `DAY ${dayNumStr}`; const dayData = challengeData[selectedDay - 1]; document.getElementById('daily-eco-score').textContent = dayData.ecoScore; document.getElementById('log-display').innerHTML = ` <p><strong class="text-cyan-300">Transport Log:</strong> ${dayData.details.transport}</p> <p><strong class="text-cyan-300">Dietary Log:</strong> ${dayData.details.diet}</p> <p class="text-cyan-300 font-semibold pt-2">Additional Actions:</p> <ul class="list-disc list-inside pl-2"> ${Object.entries(dayData.details.actions).filter(([_, val]) => val).map(([key, _]) => `<li>${key}</li>`).join('') || '<li>None Logged</li>'} </ul> `; }
+    function updateDashboard() { const totalSaved = challengeData.reduce((acc, day) => acc + day.savings, 0); const loggedDays = challengeData.filter(d => d.logged).length; const avgReduction = loggedDays > 0 ? totalSaved / loggedDays : 0; const peakScore = Math.max(...challengeData.map(d => d.ecoScore)); document.getElementById('total-saved').innerHTML = `${totalSaved.toFixed(2)} <span class="text-2xl">kg</span>`; document.getElementById('avg-reduction').innerHTML = `${avgReduction.toFixed(2)} <span class="text-2xl">kg</span>`; document.getElementById('peak-eco-score').textContent = peakScore; const projCO2 = avgReduction * 365; document.getElementById('proj-co2').textContent = `${(projCO2 / 1000).toFixed(2)} t`; document.getElementById('proj-trees').textContent = `${Math.round(projCO2 / 22)}`; document.getElementById('proj-driving').textContent = `${Math.round(projCO2 / 0.12).toLocaleString()}`; }
+    function updateAchievements() { const achievementsGrid = document.getElementById('achievements-grid'); achievementsGrid.innerHTML = ''; ACHIEVEMENTS.forEach(ach => { const isUnlocked = ach.threshold(challengeData); const badgeEl = document.createElement('div'); badgeEl.className = `badge ${isUnlocked ? 'unlocked' : ''} flex flex-col items-center p-3 rounded-lg text-center`; badgeEl.innerHTML = ` <div class="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center border-2 ${isUnlocked ? 'border-cyan-400' : 'border-gray-600'}"> <span class="text-3xl">${ach.icon}</span> </div> <p class="font-semibold mt-2 text-sm">${ach.name}</p> <p class="text-xs text-gray-400">${ach.desc}</p> `; achievementsGrid.appendChild(badgeEl); }); }
+    function renderEcoPedia() { const pediaGrid = document.getElementById('eco-pedia-grid'); pediaGrid.innerHTML = ''; ECO_PEDIA_CONTENT.forEach(item => { const card = document.createElement('div'); card.className = 'card eco-pedia-card p-6 cursor-pointer'; card.innerHTML = `<h3 class="font-orbitron text-xl text-cyan-200">${item.title}</h3><p class="text-sm text-gray-400 mt-2">Click to learn more...</p>`; card.addEventListener('click', () => { document.getElementById('modal-title').textContent = item.title; document.getElementById('modal-content').textContent = item.content; modal.classList.remove('hidden'); }); pediaGrid.appendChild(card); }); }
+    let dailyChart, categoryChart; function updateCharts() { const dailyCtx = document.getElementById('dailySavingsChart').getContext('2d'); if (dailyChart) dailyChart.destroy(); const gradient = dailyCtx.createLinearGradient(0, 0, 0, dailyCtx.canvas.clientHeight); gradient.addColorStop(0, 'rgba(0, 245, 212, 0.5)'); gradient.addColorStop(1, 'rgba(0, 245, 212, 0)'); dailyChart = new Chart(dailyCtx, { type: 'line', data: { labels: Array.from({ length: TOTAL_DAYS }, (_, i) => `D${i + 1}`), datasets: [{ label: 'CO₂ Saved (kg)', data: challengeData.map(day => day.savings), borderColor: 'var(--primary-glow)', backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 0 }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); const categoryCtx = document.getElementById('categorySavingsChart').getContext('2d'); const categoryTotals = challengeData.reduce((acc, day) => { acc.transport += day.details.savings.transport; acc.diet += day.details.savings.diet; acc.actions += day.details.savings.actions; return acc; }, { transport: 0, diet: 0, actions: 0 }); if (categoryChart) categoryChart.destroy(); categoryChart = new Chart(categoryCtx, { type: 'doughnut', data: { labels: ['Transport', 'Diet', 'Actions'], datasets: [{ data: [categoryTotals.transport, categoryTotals.diet, categoryTotals.actions], backgroundColor: ['#00f5d4', '#00bbf9', '#9b5de5'], borderColor: '#0d1a26', borderWidth: 4, hoverOffset: 8 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom' } } } }); }
+    
+    init();
+});
+</script>
+
+</body>
+</html>
+
